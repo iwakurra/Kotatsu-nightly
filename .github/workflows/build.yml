@@ -69,14 +69,14 @@ jobs:
 
       - name: Building Nightly APK 💻
         run: |
-          ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10)
+          ./gradlew assembleDebug -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10)
         continue-on-error: true
 
       - name: Building Nightly APK (Attempt 2) 💻
         run: >-
           if [ ! -f app/build/outputs/apk/nightly/app-nightly-unsigned.apk ]; then
             pkill -f java &&
-            ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10);
+            ./gradlew assembleDebug -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10);
           else
             echo "✅ Nightly APK already exists, skipping build attempt 2";
           fi
@@ -86,7 +86,7 @@ jobs:
         run: >-
           if [ ! -f app/build/outputs/apk/nightly/app-nightly-unsigned.apk ]; then
             pkill -f java &&
-            ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10);
+            ./gradlew assembleDebug -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10);
           else
             echo "✅ Nightly APK already exists, skipping build attempt 3";
           fi
@@ -109,30 +109,29 @@ jobs:
       #     echo "SIGNED_APK=app/build/outputs/apk/nightly/release.apk" >> $GITHUB_ENV
       #     echo "MAPPING_FILE=app/build/outputs/mapping/nightly/mapping.txt" >> $GITHUB_ENV
 
-      - name: Get latest changes 📑
-        id: changelog
-        run: |
-          curl -o commit.py -L https://raw.githubusercontent.com/KotatsuApp/Kotatsu-nightly/nightly/.github/assets/commit.py
-          python3 commit.py
+      # - name: Get latest changes 📑
+      #   id: changelog
+      #   run: |
+      #     curl -o commit.py -L https://raw.githubusercontent.com/KotatsuApp/Kotatsu-nightly/nightly/.github/assets/commit.py
+      #     python3 commit.py
           
-          CHANGELOG=$(cat commits.txt)
-          echo "content<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+      #     CHANGELOG=$(cat commits.txt)
+      #     echo "content<<EOF" >> $GITHUB_OUTPUT
+      #     echo "$CHANGELOG" >> $GITHUB_OUTPUT
+      #     echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create new GH Release + Uploading 🌏
         uses: softprops/action-gh-release@v2
         with:
           tag_name: nightly-${{ steps.tagger.outputs.new_tag }}
-          name: "Nightly Build ${{ steps.tagger.outputs.new_tag }}"
+          name: "Debug Build ${{ steps.tagger.outputs.new_tag }}"
           body: |
             Automated nightly build generated on ${{ steps.tagger.outputs.formatted_date }}
-
-            ${{ steps.changelog.outputs.content }}
+            
           files: |
-            "app/build/outputs/apk/nightly/app-nightly-unsigned.apk"
-            # ${{ env.SIGNED_APK }}
-            # ${{ env.MAPPING_FILE }}
+            app/build/outputs/apk/debug/app-debug.apk
+          # ${{ env.SIGNED_APK }}
+          # ${{ env.MAPPING_FILE }}
           prerelease: false
 
   # update:
