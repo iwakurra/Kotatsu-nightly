@@ -69,14 +69,14 @@ jobs:
 
       - name: Building Nightly APK 💻
         run: |
-          ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/kotatsuapp/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10)
+          ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10)
         continue-on-error: true
 
       - name: Building Nightly APK (Attempt 2) 💻
         run: >-
           if [ ! -f app/build/outputs/apk/nightly/app-nightly-unsigned.apk ]; then
             pkill -f java &&
-            ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/kotatsuapp/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10);
+            ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10);
           else
             echo "✅ Nightly APK already exists, skipping build attempt 2";
           fi
@@ -86,28 +86,28 @@ jobs:
         run: >-
           if [ ! -f app/build/outputs/apk/nightly/app-nightly-unsigned.apk ]; then
             pkill -f java &&
-            ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/kotatsuapp/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10);
+            ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10);
           else
             echo "✅ Nightly APK already exists, skipping build attempt 3";
           fi
         continue-on-error: false
 
-      - name: Packaging Nightly APK 💻
-        uses: ilharp/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDir: app/build/outputs/apk/nightly
-          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
-          keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          buildToolsVersion: 35.0.0
+      # - name: Packaging Nightly APK 💻
+      #   uses: ilharp/sign-android-release@v1
+      #   id: sign_app
+      #   with:
+      #     releaseDir: app/build/outputs/apk/nightly
+      #     signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
+      #     keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
+      #     keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      #     keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      #     buildToolsVersion: 35.0.0
 
-      - name: Prepare to Upload 🌏
-        run: |
-          mv ${{steps.sign_app.outputs.signedFile}} app/build/outputs/apk/nightly/release.apk
-          echo "SIGNED_APK=app/build/outputs/apk/nightly/release.apk" >> $GITHUB_ENV
-          echo "MAPPING_FILE=app/build/outputs/mapping/nightly/mapping.txt" >> $GITHUB_ENV
+      # - name: Prepare to Upload 🌏
+      #   run: |
+      #     mv ${{steps.sign_app.outputs.signedFile}} app/build/outputs/apk/nightly/release.apk
+      #     echo "SIGNED_APK=app/build/outputs/apk/nightly/release.apk" >> $GITHUB_ENV
+      #     echo "MAPPING_FILE=app/build/outputs/mapping/nightly/mapping.txt" >> $GITHUB_ENV
 
       - name: Get latest changes 📑
         id: changelog
@@ -130,8 +130,9 @@ jobs:
 
             ${{ steps.changelog.outputs.content }}
           files: |
-            ${{ env.SIGNED_APK }}
-            ${{ env.MAPPING_FILE }}
+            "app/build/outputs/apk/nightly/app-nightly-unsigned.apk"
+            # ${{ env.SIGNED_APK }}
+            # ${{ env.MAPPING_FILE }}
           prerelease: false
 
   update:
