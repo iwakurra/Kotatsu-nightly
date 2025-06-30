@@ -1,8 +1,8 @@
 name: Checkout & Build App
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
+  # schedule:
+  #   - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -66,10 +66,23 @@ jobs:
           sed -i '/<SwitchPreferenceCompat/,/android:title="@string\/allow_unstable_updates"/d' app/src/main/res/xml/pref_about.xml
           sed -i 's/now\.format("yyMMdd")/now.format("yyyyMMdd")/' app/build.gradle
           sed -i 's/org\.gradle\.jvmargs=-Xmx1536M -Dkotlin\.daemon\.jvm\.options\\="-Xmx1536M"/org.gradle.jvmargs=-Xmx8192M -Dkotlin.daemon.jvm.options\\="-Xmx8192M"/' gradle.properties
+      - name: Change kotatsu-parsers source
+        run: |
+          sed -i 's/com\.github\.KotatsuApp/com.github.iwakurra/' app/build.gradle
+      - name: Change sign config for nightly to debug (cause i'm don't have official keys)
+        run: |
+          sed -i '/nightly {/,/}/c\
+                  nightly {\
+                          initWith debug\
+                          minifyEnabled true\
+                          shrinkResources true\
+                          proguardFiles getDefaultProguardFile('"'"'proguard-android-optimize.txt'"'"'), '"'"'proguard-rules.pro'"'"'\
+                          applicationIdSuffix = '"'"'.nightly'"'"'\
+                  }' app/build.gradle
 
       - name: Building Nightly APK 💻
         run: |
-          ./gradlew assembleDebug -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10)
+          ./gradlew assembleNightly -DparsersVersionOverride=$(curl -s https://api.github.com/repos/iwakurra/kotatsu-parsers/commits/master -H "Accept: application/vnd.github.sha" | cut -c -10)
         continue-on-error: false
 
       # - name: Building Nightly APK (Attempt 2) 💻
@@ -124,12 +137,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: nightly-${{ steps.tagger.outputs.new_tag }}
-          name: "Debug Build ${{ steps.tagger.outputs.new_tag }}"
+          name: "Nightly Build ${{ steps.tagger.outputs.new_tag }}"
           body: |
-            Automated nightly build generated on ${{ steps.tagger.outputs.formatted_date }}
+            Automated nightly build with my kotatsu-parsers generated on ${{ steps.tagger.outputs.formatted_date }}
             
           files: |
-            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/nightly/app-nightly.apk
           # ${{ env.SIGNED_APK }}
           # ${{ env.MAPPING_FILE }}
           prerelease: false
